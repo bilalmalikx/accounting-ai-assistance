@@ -1,6 +1,6 @@
 """Minimal Embeddings Manager - Only initialization"""
 from sentence_transformers import SentenceTransformer
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings 
 from backend.config import settings
 import logging
 

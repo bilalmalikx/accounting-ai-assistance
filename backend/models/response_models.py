@@ -58,3 +58,34 @@ class AuditStatsResponse(BaseModel):
     total_chunks: int
     total_feedback: int
     positive_feedback: int
+
+# ========== ADD THESE MISSING MODELS ==========
+
+class DocumentValidationResponse(BaseModel):
+    """Response for document validation endpoint"""
+    filename: str
+    is_valid: bool
+    issues: List[str]
+    file_size: int
+    estimated_chunks: int
+
+class DocumentUploadResponse(BaseModel):
+    """Response for document upload endpoint"""
+    filename: str
+    chunks_created: int
+    category: str
+    file_hash: str
+    status: str
+    message: str
+    pii_redacted: bool = False
+    processing_time_ms: float = 0
+
+class DocumentListResponse(BaseModel):
+    """Response for document list endpoint"""
+    documents: List[Dict[str, Any]]
+    total: int
+
+class DocumentDeleteResponse(BaseModel):
+    """Response for document delete endpoint"""
+    status: str
+    document_hash: str

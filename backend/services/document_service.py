@@ -1,5 +1,5 @@
 """Complete Document Processing Service with Validation"""
-from langchain.document_loaders import PyPDFLoader, TextLoader
+from langchain_community.document_loaders import PyPDFLoader, TextLoader 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pathlib import Path
 import hashlib

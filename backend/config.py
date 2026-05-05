@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from typing import List, Optional
 from pathlib import Path
 import json
@@ -82,9 +83,24 @@ class Settings(BaseSettings):
     METRICS_PORT: int = 9090
     HEALTH_CHECK_INTERVAL: int = 30
     
+    @field_validator('ALLOWED_EXTENSIONS', mode='before')
+    @classmethod
+    def parse_allowed_extensions(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+    
+    @field_validator('CORS_ORIGINS', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+    
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"  # Ignore extra fields from .env
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

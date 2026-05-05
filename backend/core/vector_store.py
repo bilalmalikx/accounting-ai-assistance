@@ -1,5 +1,5 @@
 """Minimal Vector Store Manager"""
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from backend.core.embeddings import EmbeddingsManager
 from backend.config import settings
