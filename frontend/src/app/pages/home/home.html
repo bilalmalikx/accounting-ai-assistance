@@ -1,0 +1,82 @@
+<!-- Animated Background -->
+<div class="bg-mesh">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+<div class="bg-noise"></div>
+
+<div class="app">
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📄</div>
+      <div class="logo-text">Docu<span>Mind</span></div>
+    </div>
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      <span>API Online</span>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-tag">✦ AI-Powered Document Intelligence</div>
+    <h1>Ask Anything About<br><span class="grad">Your Documents</span></h1>
+    <p>Upload a PDF and ask questions in plain language. Our AI extracts precise answers with source references.</p>
+  </div>
+
+  <!-- Stats Component -->
+  <app-stats-card [stats]="stats"></app-stats-card>
+
+  <!-- File Upload Component -->
+  <app-file-upload
+    [isUploading]="isUploading"
+    [uploadProgress]="uploadProgress"
+    [uploadError]="uploadError"
+    (onFileSelected)="onFileSelected($event)"
+    (onFileDropped)="onFileDropped($event)">
+  </app-file-upload>
+
+  <!-- Files List with Delete Button -->
+  <div class="files-section" *ngIf="documents.length > 0">
+    <div class="section-label">Loaded Documents</div>
+    <div class="files-list">
+      <div *ngFor="let doc of documents; trackBy: trackByFilename" 
+           class="file-chip" 
+           [class.active]="selectedDocument?.name === doc.name"
+           (click)="selectDocument(doc)">
+        <div class="file-chip-dot"></div>
+        <span class="file-icon">📄</span>
+        <div class="file-chip-name">{{ doc.displayName }}</div>
+        <div class="file-chip-meta">{{ doc.summary }}</div>
+        <div class="file-chip-badge">READY</div>
+        <button class="file-chip-delete" 
+                (click)="deleteDocument(doc, $event)" 
+                title="Delete document">
+          🗑️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Question Input Component -->
+  <app-question-input
+    [(questionText)]="questionText"
+    [isLoading]="isLoading"
+    [qaError]="qaError"
+    [hints]="hints"
+    (onAsk)="askQuestion()"
+    (onInput)="autoResizeTextarea($event)"
+    (onKeydown)="onKeydown($event)"
+    (onHintClick)="fillHint($event)">
+  </app-question-input>
+
+  <!-- Answer Display Component -->
+  <app-answer-display
+    [currentAnswer]="currentAnswer"
+    [history]="history">
+  </app-answer-display>
+</div>

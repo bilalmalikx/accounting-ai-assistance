@@ -5,3 +5,12 @@ data/vector_store/
 .env
 logs/
 venv/
+
+
+#  docker run -d -p 80:80 -p 8000:8000 documind:latest
+# docker run -d \                                    
+#   --name documind-app \
+#   -p 8080:80 \
+#   -p 8000:8000 \
+#   -v "$PWD/data:/app/data" \
+#   documind:latest

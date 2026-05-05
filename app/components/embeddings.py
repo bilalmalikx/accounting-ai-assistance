@@ -1,12 +1,11 @@
 from typing import List
 from sentence_transformers import SentenceTransformer
-from app.utils.config import config
 
 class EmbeddingsComponent:
     def __init__(self):
-        # Load local sentence transformer model
-        self.model = SentenceTransformer(config.EMBEDDING_MODEL)
-        self.dimension = config.EMBEDDING_DIMENSION
+        # Load sentence transformer model
+        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.dimension = 384
     
     def embed_query(self, text: str) -> List[float]:
         """Generate embedding for a single query"""
@@ -23,16 +22,7 @@ class EmbeddingsComponent:
         return self
     
     def __call__(self, texts):
-        """Make component callable for LangChain"""
+        """Make component callable"""
         if isinstance(texts, str):
             return self.embed_query(texts)
         return self.embed_documents(texts)
-    
-    # For LangChain compatibility - embedding function property
-    @property
-    def embed_query_function(self):
-        return self.embed_query
-    
-    @property
-    def embed_documents_function(self):
-        return self.embed_documents
