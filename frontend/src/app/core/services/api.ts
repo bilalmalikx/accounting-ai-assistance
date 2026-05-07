@@ -37,6 +37,10 @@ export class ApiService {
       );
   }
 
+  askQuestionMultiple(request: { question: string; pdf_names: string[] }): Observable<AnswerResponse> {
+    return this.http.post<AnswerResponse>(`${this.apiUrl}/ask`, request);
+}
+
   checkHealth(): Observable<any> {
     return this.http.get(`${this.apiUrl}/health`)
       .pipe(

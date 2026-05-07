@@ -85,15 +85,27 @@ class VectorStoreComponent:
             self.vector_store.add_documents(documents)
             self.vector_store.persist()
 
-    def similarity_search(self, query: str, k: int = 3) -> List:
-        """Search for similar documents"""
+    def similarity_search(self, query: str, pdf_name: str = None, k: int = 3) -> List:
         if self.vector_store is None:
             self.load_vector_store()
-
+    
         if self.vector_store is None:
             return []
-
-        return self.vector_store.similarity_search(query, k=k)
+    
+        try:
+            if pdf_name:
+                results = self.vector_store.similarity_search(
+                    query, 
+                    k=k,
+                    filter={"pdf_name": pdf_name}
+                )
+            else:
+                results = self.vector_store.similarity_search(query, k=k)
+            return results
+        except Exception as e:
+        # If error, try reloading in read-only mode
+            print(f"Search error: {e}")
+            return []
 
     def delete_vector_store(self):
         """Delete entire vector store"""

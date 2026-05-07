@@ -7,17 +7,40 @@ class RetrievalService:
         self.vector_store = VectorStoreComponent()
         self.top_k = config.TOP_K_RESULTS
     
-    def retrieve_relevant_chunks(self, question: str, pdf_name: str = None) -> List[Dict[str, Any]]:
+    def retrieve_relevant_chunks(self, question: str, pdf_name: str = None, pdf_names: List[str] = None) -> List[Dict[str, Any]]:
         """
         Question ke relevant chunks dhundta hai
-        Agar pdf_name specified hai to sirf us PDF se dhundhega
+        - pdf_name: single PDF ke liye
+        - pdf_names: multiple PDFs ke liye
         """
         # Load vector store agar load nahi hai
         if self.vector_store.vector_store is None:
             self.vector_store.load_vector_store()
         
-        # Similarity search
-        results = self.vector_store.similarity_search(question, k=self.top_k)
+        all_results = []
+        
+        # ✅ MULTIPLE PDFs CASE
+        if pdf_names and len(pdf_names) > 0:
+            for name in pdf_names:
+                results = self.vector_store.similarity_search(question, pdf_name=name, k=self.top_k)
+                all_results.extend(results)
+            
+            # Remove duplicates by content
+            seen = set()
+            unique_results = []
+            for doc in all_results:
+                if doc.page_content not in seen:
+                    seen.add(doc.page_content)
+                    unique_results.append(doc)
+            results = unique_results[:self.top_k]
+        
+        # ✅ SINGLE PDF CASE
+        elif pdf_name:
+            results = self.vector_store.similarity_search(question, pdf_name=pdf_name, k=self.top_k)
+        
+        # ✅ NO FILTER (search all PDFs)
+        else:
+            results = self.vector_store.similarity_search(question, k=self.top_k)
         
         # Format results with metadata
         formatted_results = []
@@ -25,17 +48,8 @@ class RetrievalService:
             formatted_results.append({
                 "content": doc.page_content,
                 "metadata": doc.metadata,
-                "score": None  # Chroma score nahi deta, FAISS use karoge to milega
+                "score": None
             })
-        
-        # Filter by pdf_name if specified
-        if pdf_name:
-            filtered = [r for r in formatted_results if r["metadata"].get("pdf_name") == pdf_name]
-            if filtered:
-                return filtered
-            else:
-                # Agar specified PDF mein kuch nahi mila, to warning ke saath empty return
-                return []
         
         return formatted_results
     

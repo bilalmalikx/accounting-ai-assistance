@@ -6,16 +6,14 @@ class LLMComponent:
     def __init__(self):
         self.model = config.LLM_MODEL
         self.base_url = config.OLLAMA_BASE_URL
-        self.temperature = config.LLM_TEMPERATURE
+        self.temperature = 0.1  # ✅ Low temperature for factual answers
         self.max_tokens = config.LLM_MAX_TOKENS
         
-        # Verify Ollama is running and model is available
         self._check_model_availability()
     
     def _check_model_availability(self):
         """Check if Ollama is running and model is installed"""
         try:
-            # List available models
             models = ollama.list()
             model_names = [m['model'] for m in models.get('models', [])]
             
@@ -34,7 +32,7 @@ class LLMComponent:
                 model=self.model,
                 messages=[{'role': 'user', 'content': prompt}],
                 options={
-                    'temperature': self.temperature,
+                    'temperature': 0.1,
                     'num_predict': self.max_tokens
                 }
             )
@@ -43,24 +41,25 @@ class LLMComponent:
             return f"Error generating response: {str(e)}"
     
     def generate_with_context(self, question: str, context: str) -> str:
-        """Generate response using context (RAG)"""
-        system_prompt = """You are a helpful accounting assistant. Using the provided document context, answer the user's question.
-
-GUIDELINES:
-- If the question asks for "first step" or "steps", look for numbered items, bullet points, or sequential information.
-- If exact answer not found, provide the MOST RELEVANT information you CAN find.
-- If the context has related concepts, explain them.
-- ONLY say "I don't know" if the context is completely empty.
-- Be specific with numbers, dates, and amounts from the context.
-
-Be helpful and extract value from whatever context is provided."""
+        """Generate response using context (RAG) - NO HALLUCINATION"""
         
-        user_prompt = f"""Context:
+        system_prompt = """You are a strict document assistant. Follow these rules:
+
+1. ONLY answer using information from the context below.
+2. If the context does NOT contain the answer, say exactly: "I cannot find this information in the document."
+3. DO NOT add any information, numbers, or facts that are not in the context.
+4. DO NOT say "based on the context" or "according to the document" - just state the answer.
+5. DO NOT make up calculations - if numbers are not in context, don't calculate.
+6. Be concise and direct.
+
+This is very important: NEVER INVENT INFORMATION."""
+        
+        user_prompt = f"""CONTEXT (use only this):
 {context}
 
-Question: {question}
+QUESTION: {question}
 
-Answer based only on the above context:"""
+ANSWER (if not in context, say "I cannot find this information in the document"):"""
         
         try:
             messages = [
@@ -72,8 +71,9 @@ Answer based only on the above context:"""
                 model=self.model,
                 messages=messages,
                 options={
-                    'temperature': self.temperature,
-                    'num_predict': self.max_tokens
+                    'temperature': 0.1,  # ✅ Very low - no creativity
+                    'num_predict': self.max_tokens,
+                    'repeat_penalty': 1.1
                 }
             )
             return response['message']['content']

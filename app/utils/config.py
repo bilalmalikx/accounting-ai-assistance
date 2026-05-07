@@ -7,6 +7,7 @@ class Config:
     # Local LLM Configuration (Ollama)
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     LLM_MODEL = os.getenv("LLM_MODEL", "llama3.2:3b")  # Ollama model
+    LLM_TEMPERATURE = 0.1  # ✅ Very low for factual answers
     
     # Local Embeddings Configuration
     EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")  # Sentence transformer

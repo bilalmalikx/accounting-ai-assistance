@@ -38,14 +38,24 @@
     (onFileDropped)="onFileDropped($event)">
   </app-file-upload>
 
-  <!-- Files List with Delete Button -->
+  <!-- Files List with Checkboxes and Delete Button -->
   <div class="files-section" *ngIf="documents.length > 0">
-    <div class="section-label">Loaded Documents</div>
+    <div class="section-header">
+      <div class="section-label">Loaded Documents</div>
+      <div class="selection-actions">
+        <button class="action-btn" (click)="selectAllDocuments()">Select All</button>
+        <button class="action-btn" (click)="clearSelection()">Clear</button>
+      </div>
+    </div>
+    
     <div class="files-list">
       <div *ngFor="let doc of documents; trackBy: trackByFilename" 
            class="file-chip" 
-           [class.active]="selectedDocument?.name === doc.name"
-           (click)="selectDocument(doc)">
+           [class.selected]="selectedDocumentIds.has(doc.name)">
+        <input type="checkbox" 
+               class="doc-checkbox"
+               [checked]="selectedDocumentIds.has(doc.name)"
+               (change)="toggleDocument(doc, $event)">
         <div class="file-chip-dot"></div>
         <span class="file-icon">📄</span>
         <div class="file-chip-name">{{ doc.displayName }}</div>
@@ -57,6 +67,11 @@
           🗑️
         </button>
       </div>
+    </div>
+    
+    <!-- Selected Documents Info -->
+    <div class="selected-info" *ngIf="selectedDocumentIds.size > 0">
+      <span class="selected-count">{{ selectedDocumentIds.size }} document(s) selected</span>
     </div>
   </div>
 

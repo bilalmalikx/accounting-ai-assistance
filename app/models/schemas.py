@@ -9,7 +9,9 @@ class PDFUploadResponse(BaseModel):
 
 class QuestionRequest(BaseModel):
     question: str
-    pdf_name: Optional[str] = None 
+    pdf_name: Optional[str] = None
+    pdf_names: Optional[List[str]] = None      # ✅ Multiple PDFs ke liye
+    session_id: Optional[str] = "default"
 
 class AnswerResponse(BaseModel):
     question: str

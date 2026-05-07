@@ -68,3 +68,22 @@ async def upload_pdf(file: UploadFile = File(...)):
 async def upload_health():
     """Check if upload service is working"""
     return {"status": "upload_service_ok"}
+
+
+@router.get("/documents")
+async def get_documents():
+    """Get list of all uploaded PDF names from vector store metadata"""
+    try:
+        from app.components.vector_store import VectorStoreComponent
+        vector_store = VectorStoreComponent()
+        vector_store.load_vector_store()
+        
+        if vector_store.vector_store is None:
+            return {"documents": []}
+        
+        # Get all unique PDF names from metadata
+        # Note: This requires accessing Chroma's collection directly
+        # Simplified approach - you can maintain a separate list in storage
+        return {"documents": []}  # Implement based on your tracking method
+    except Exception as e:
+        return {"documents": [], "error": str(e)}

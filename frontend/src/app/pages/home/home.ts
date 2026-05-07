@@ -31,7 +31,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   @ViewChild('questionInput') questionInput!: ElementRef<HTMLTextAreaElement>;
   
   documents: Document[] = [];
-  selectedDocument: Document | null = null;
+  selectedDocumentIds: Set<string> = new Set();  // ✅ Track selected PDFs
+  selectedDocument: Document | null = null;  // Keep for backward compatibility
   currentAnswer: Answer | null = null;
   history: any[] = [];
   isLoading = false;
@@ -53,6 +54,17 @@ export class HomeComponent implements OnInit, OnDestroy {
     questions: 0,
     avgConfidence: 0
   };
+  
+  getSelectedCount(): number {
+    return this.selectedDocumentIds.size;
+  }
+  
+  getSelectedNames(): string {
+    const names = Array.from(this.selectedDocumentIds);
+    if (names.length === 0) return 'No document selected';
+    if (names.length === 1) return names[0];
+    return `${names.length} documents selected`;
+  }
   
   private destroy$ = new Subject<void>();
 
@@ -218,14 +230,15 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   // ✅ DELETE DOCUMENT FUNCTION
   deleteDocument(document: Document, event: Event): void {
-    event.stopPropagation(); // Prevent triggering selectDocument
+    event.stopPropagation();
     
     if (confirm(`Are you sure you want to delete "${document.name}"?`)) {
-      // Call backend delete API if you have one
-      // this.apiService.deleteDocument(document.name).subscribe(...)
-      
-      // Remove from frontend service
       this.documentService.removeDocument(document.name);
+      
+      // Remove from selected set if present
+      if (this.selectedDocumentIds.has(document.name)) {
+        this.selectedDocumentIds.delete(document.name);
+      }
       
       // Clear current answer if deleted document was selected
       if (this.selectedDocument?.name === document.name) {
@@ -237,10 +250,35 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ✅ TOGGLE DOCUMENT SELECTION
+  toggleDocument(document: Document, event: Event): void {
+    event.stopPropagation();
+    if (this.selectedDocumentIds.has(document.name)) {
+      this.selectedDocumentIds.delete(document.name);
+    } else {
+      this.selectedDocumentIds.add(document.name);
+    }
+    this.cdr.detectChanges();
+  }
+
+  // ✅ SELECT ALL DOCUMENTS
+  selectAllDocuments(): void {
+    this.documents.forEach(doc => this.selectedDocumentIds.add(doc.name));
+    this.cdr.detectChanges();
+  }
+
+  // ✅ CLEAR ALL SELECTIONS
+  clearSelection(): void {
+    this.selectedDocumentIds.clear();
+    this.cdr.detectChanges();
+  }
+
+  // ✅ ASK QUESTION ON SELECTED DOCUMENTS
   askQuestion(): void {
     if (!this.questionText.trim()) return;
-    if (!this.selectedDocument && this.documents.length === 0) {
-      this.showQAError('Please upload a document first.');
+    
+    if (this.selectedDocumentIds.size === 0 && this.documents.length === 0) {
+      this.showQAError('Please upload and select at least one document.');
       return;
     }
     
@@ -248,12 +286,14 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.questionService.setLoading(true);
     this.cdr.detectChanges();
     
+    const pdf_names = Array.from(this.selectedDocumentIds);
+    
     const request = {
       question: this.questionText.trim(),
-      pdf_name: this.selectedDocument?.name || this.documents[0]?.name
+      pdf_names: pdf_names  // ✅ Send all selected PDF names
     };
     
-    this.apiService.askQuestion(request).subscribe({
+    this.apiService.askQuestionMultiple(request).subscribe({
       next: (response) => {
         const answer = new Answer(
           response.question,
