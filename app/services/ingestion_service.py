@@ -29,9 +29,9 @@ class IngestionService:
             chunks = self.text_splitter.split_documents(documents)
             chunks_count = len(chunks)
             
-            # Step 3: Add metadata (filename)
+            # Step 3: Add metadata (filename) - clean filename
             for chunk in chunks:
-                chunk.metadata["pdf_name"] = filename
+                chunk.metadata["pdf_name"] = filename.strip()
             
             # Step 4: Store in vector database
             self.vector_store.create_vector_store(chunks)
@@ -59,7 +59,7 @@ class IngestionService:
         chunks = self.text_splitter.split_documents(documents)
         
         for chunk in chunks:
-            chunk.metadata["pdf_name"] = filename
+            chunk.metadata["pdf_name"] = filename.strip()
         
         self.vector_store.add_documents(chunks)
         

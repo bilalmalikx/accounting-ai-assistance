@@ -6,7 +6,7 @@ class LLMComponent:
     def __init__(self):
         self.model = config.LLM_MODEL
         self.base_url = config.OLLAMA_BASE_URL
-        self.temperature = 0.1  # ✅ Low temperature for factual answers
+        self.temperature = 0.0
         self.max_tokens = config.LLM_MAX_TOKENS
         
         self._check_model_availability()

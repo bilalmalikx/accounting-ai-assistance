@@ -17,39 +17,44 @@ class RetrievalService:
         if self.vector_store.vector_store is None:
             self.vector_store.load_vector_store()
         
-        all_results = []
+        # Get more chunks initially for better filtering
+        search_k = self.top_k * 3 if (pdf_names and len(pdf_names) > 0) or pdf_name else self.top_k
         
-        # ✅ MULTIPLE PDFs CASE
-        if pdf_names and len(pdf_names) > 0:
-            for name in pdf_names:
-                results = self.vector_store.similarity_search(question, pdf_name=name, k=self.top_k)
-                all_results.extend(results)
-            
-            # Remove duplicates by content
-            seen = set()
-            unique_results = []
-            for doc in all_results:
-                if doc.page_content not in seen:
-                    seen.add(doc.page_content)
-                    unique_results.append(doc)
-            results = unique_results[:self.top_k]
-        
-        # ✅ SINGLE PDF CASE
-        elif pdf_name:
-            results = self.vector_store.similarity_search(question, pdf_name=pdf_name, k=self.top_k)
-        
-        # ✅ NO FILTER (search all PDFs)
-        else:
-            results = self.vector_store.similarity_search(question, k=self.top_k)
+        # Get chunks (without filter first)
+        all_docs = self.vector_store.similarity_search(question, k=search_k)
         
         # Format results with metadata
-        formatted_results = []
-        for doc in results:
-            formatted_results.append({
+        all_formatted = []
+        for doc in all_docs:
+            all_formatted.append({
                 "content": doc.page_content,
                 "metadata": doc.metadata,
                 "score": None
             })
+        
+        # ✅ MANUAL FILTER: Sirf selected PDFs ke chunks rakho
+        if pdf_names and len(pdf_names) > 0:
+            filtered = []
+            for chunk in all_formatted:
+                doc_pdf_name = chunk["metadata"].get("pdf_name", "")
+                # Clean and compare
+                doc_pdf_name_clean = doc_pdf_name.strip()
+                for selected_name in pdf_names:
+                    if selected_name.strip() == doc_pdf_name_clean:
+                        filtered.append(chunk)
+                        break
+            formatted_results = filtered[:self.top_k]
+        
+        elif pdf_name:
+            filtered = []
+            for chunk in all_formatted:
+                doc_pdf_name = chunk["metadata"].get("pdf_name", "")
+                if doc_pdf_name.strip() == pdf_name.strip():
+                    filtered.append(chunk)
+            formatted_results = filtered[:self.top_k]
+        
+        else:
+            formatted_results = all_formatted[:self.top_k]
         
         return formatted_results
     
