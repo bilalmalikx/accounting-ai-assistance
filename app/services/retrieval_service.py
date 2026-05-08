@@ -8,19 +8,17 @@ class RetrievalService:
         self.top_k = config.TOP_K_RESULTS
     
     def retrieve_relevant_chunks(self, question: str, pdf_name: str = None, pdf_names: List[str] = None) -> List[Dict[str, Any]]:
-        """
-        Question ke relevant chunks dhundta hai
-        - pdf_name: single PDF ke liye
-        - pdf_names: multiple PDFs ke liye
-        """
         # Load vector store agar load nahi hai
         if self.vector_store.vector_store is None:
             self.vector_store.load_vector_store()
         
         # Get more chunks initially for better filtering
-        search_k = self.top_k * 3 if (pdf_names and len(pdf_names) > 0) or pdf_name else self.top_k
+        if (pdf_names and len(pdf_names) > 0) or pdf_name:
+            search_k = self.top_k * 3  # For filtered search, get more
+        else:
+            search_k = self.top_k  # For all documents search
         
-        # Get chunks (without filter first)
+        # Get chunks
         all_docs = self.vector_store.similarity_search(question, k=search_k)
         
         # Format results with metadata
@@ -32,29 +30,36 @@ class RetrievalService:
                 "score": None
             })
         
-        # ✅ MANUAL FILTER: Sirf selected PDFs ke chunks rakho
+        # Debug print
+        print(f"🔍 Total chunks retrieved: {len(all_formatted)}")
+        
+        # ✅ FILTER: Sirf selected PDFs ke chunks rakho (if selected)
         if pdf_names and len(pdf_names) > 0:
             filtered = []
+            selected_clean = [name.strip() for name in pdf_names]
+            
             for chunk in all_formatted:
-                doc_pdf_name = chunk["metadata"].get("pdf_name", "")
-                # Clean and compare
-                doc_pdf_name_clean = doc_pdf_name.strip()
-                for selected_name in pdf_names:
-                    if selected_name.strip() == doc_pdf_name_clean:
-                        filtered.append(chunk)
-                        break
+                doc_pdf_name = chunk["metadata"].get("pdf_name", "").strip()
+                if doc_pdf_name in selected_clean:
+                    filtered.append(chunk)
+            
             formatted_results = filtered[:self.top_k]
+            print(f"📄 After filter ({selected_clean}): {len(filtered)} chunks found")
         
         elif pdf_name:
             filtered = []
+            target_name = pdf_name.strip()
             for chunk in all_formatted:
-                doc_pdf_name = chunk["metadata"].get("pdf_name", "")
-                if doc_pdf_name.strip() == pdf_name.strip():
+                doc_pdf_name = chunk["metadata"].get("pdf_name", "").strip()
+                if doc_pdf_name == target_name:
                     filtered.append(chunk)
             formatted_results = filtered[:self.top_k]
+            print(f"📄 After filter ({target_name}): {len(filtered)} chunks found")
         
         else:
+            # ✅ NO FILTER - return all chunks (search ALL documents)
             formatted_results = all_formatted[:self.top_k]
+            print(f"📄 No filter - searching ALL documents: {len(formatted_results)} chunks found")
         
         return formatted_results
     

@@ -10,16 +10,16 @@ guardrails_service = GuardrailsService()
 
 @router.post("/ask", response_model=AnswerResponse)
 async def ask_question(request: QuestionRequest):
+    """
+    Angular se question receive karta hai
+    Supports both single PDF (pdf_name) and multiple PDFs (pdf_names)
+    """
     try:
         if not request.question or len(request.question.strip()) == 0:
             raise HTTPException(status_code=400, detail="Question cannot be empty")
         
-        # ✅ VALIDATION: User must select at least one document
-        if not request.pdf_name and not request.pdf_names:
-            raise HTTPException(
-                status_code=400, 
-                detail="Please select at least one document to ask a question."
-            )
+        # ✅ NO VALIDATION - User can ask without selecting any document
+        # If no document selected, backend will search ALL documents
         
         # Get session_id from request
         session_id = getattr(request, 'session_id', 'default')
